@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ashta Changa Game</title>
+    <style>
+        :root {
+            --bg-color: #0E1413;       /* Deep charcoal solid background matching the board's felt theme */
+            --text-color: #EADCC8;
+            --board-border: #FFFFFF;    /* Crisp clean white lines */
+            --cell-bg: #13302A;         /* Traditional beautiful deep dark green/teal felt */
+            --safe-bg: #C4A47C;
+            --home-bg: #1B3531;
+            --red-color: #F4523B;       /* Pure matching vibrant red */
+            --green-color: #5DC122;     /* Pure matching vibrant green */
+            --yellow-color: #FABD15;    /* Pure matching vibrant yellow */
+            --blue-color: #0078FF;      /* Pure matching vibrant blue */
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: Georgia, 'Times New Roman', serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 12px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin: 5px 0;
+            text-align: center;
+            font-weight: bold;
+            color: #D9A066;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.6);
+            z-index: 2;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: #8C7355;
+            margin-bottom: 12px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            z-index: 2;
+        }
+
+        #setup-screen {
+            background: #1A110B;
+            border: 2px solid var(--board-border);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            z-index: 2;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8C7355;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--board-border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+            background: #120B06;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: #D9A066;
+        }
+
+        .player-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            background-color: #8B5E3C;
+            color: #FDF5E6;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border-bottom: 4px solid #3D2B1F;
+            transition: all 0.1s ease;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+            background-color: #5C3C24;
+        }
+
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        /* 5x5 Board Layout in Immersive style */
+        .board-container {
+            width: 100%;
+            max-width: 380px;
+            aspect-ratio: 1;
+            background-color: #FFFFFF; /* Makes grid lines brilliant white */
+            border: 3.5px solid #FFFFFF;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 2px; /* White border grid spacing */
+            box-shadow: 0 12px 35px rgba(0,0,0,0.8);
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            color: #EADCC8;
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            gap: 2px;
+            padding: 2px;
+            overflow: hidden;
+            transition: background-color 0.2s;
+        }
+
+        /* Elegant flat diagonal lines for safe zones */
+        .safe-zone {
+            overflow: hidden !important;
+        }
+
+        .safe-zone::before {
+            content: "" !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 141.4% !important;
+            height: 0 !important;
+            border-top: 2px solid rgba(255, 255, 255, 0.95) !important;
+            transform: rotate(45deg) !important;
+            transform-origin: top left !important;
+            pointer-events: none !important;
+            z-index: 2;
+        }
+
+        .safe-zone::after {
+            content: "" !important;
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 141.4% !important;
+            height: 0 !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.95) !important;
+            transform: rotate(-45deg) !important;
+            transform-origin: bottom left !important;
+            pointer-events: none !important;
+            z-index: 2;
+        }
+
+        /* Distinct safe zone background colors matching reference image */
+        .safe-blue { background-color: var(--blue-color) !important; }
+        .safe-green { background-color: var(--green-color) !important; }
+        .safe-yellow { background-color: var(--yellow-color) !important; }
+        .safe-red { background-color: var(--red-color) !important; }
+
+        /* Home cell layout styling with crisp responsive flat diagonal triangles */
+        .home-cell {
+            background-color: var(--home-bg) !important;
+            position: relative;
+            overflow: hidden !important;
+        }
+
+        /* Cross lines overlay for home cell */
+        .home-cell::before {
+            content: "" !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 141.4% !important;
+            height: 0 !important;
+            border-top: 2.5px solid rgba(255, 255, 255, 0.95) !important;
+            transform: rotate(45deg) !important;
+            transform-origin: top left !important;
+            pointer-events: none !important;
+            z-index: 5;
+        }
+
+        .home-cell::after {
+            content: "" !important;
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 141.4% !important;
+            height: 0 !important;
+            border-bottom: 2.5px solid rgba(255, 255, 255, 0.95) !important;
+            transform: rotate(-45deg) !important;
+            transform-origin: bottom left !important;
+            pointer-events: none !important;
+            z-index: 5;
+        }
+
+        .home-pane {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+            z-index: 1;
+        }
+          .home-pane-top {
+              background-color: var(--blue-color) !important;
+              clip-path: polygon(50% 50%, 0 0, 100% 0) !important;
+          }
+          .home-pane-right {
+              background-color: var(--red-color) !important;
+              clip-path: polygon(50% 50%, 100% 0, 100% 100%) !important;
+          }
+          .home-pane-bottom {
+              background-color: var(--yellow-color) !important;
+              clip-path: polygon(50% 50%, 100% 100%, 0 100%) !important;
+          }
+          .home-pane-left {
+              background-color: var(--green-color) !important;
+              clip-path: polygon(50% 50%, 0 100%, 0 0) !important;
+          }
+
+        /* Direction arrows emojis display style */
+        .board-arrow-emoji {
+            position: absolute !important;
+            font-size: min(22px, 5.5vw) !important;
+            font-weight: bold !important;
+            pointer-events: none !important;
+            user-select: none !important;
+            z-index: 10;
+            opacity: 0.9;
+            filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.7));
+        }
+
+        /* Pawns Style: Authentic circular star coins matching reference image */
+        .pawn {
+            width: min(30px, 7vw);
+            height: min(30px, 7vw);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 15;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .pawn:hover {
+            transform: scale(1.1);
+        }
+
+        .pawn-R { background-color: var(--red-color); border-color: #FFEBE9; }
+        .pawn-G { background-color: var(--green-color); border-color: #ECF9E3; }
+        .pawn-Y { background-color: var(--yellow-color); border-color: #FFFDF0; color: #5C3C24; text-shadow: none; }
+        .pawn-B { background-color: var(--blue-color); border-color: #E3F1FF; }
+
+        .valid-move {
+            animation: bounce 0.6s infinite alternate;
+            box-shadow: 0 0 14px #FABE2C, 0 4px 6px rgba(0,0,0,0.4);
+            border: 2.5px solid #FABE2C;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0) scale(1.05); }
+            to { transform: translateY(-5px) scale(1.05); }
+        }
+
+        /* Game Info & Dashboard */
+        .info-panel {
+            background: #1A110B;
+            border: 1.5px solid var(--board-border);
+            border-radius: 12px;
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .player-turn {
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            background: #2D1C12;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--board-border);
+        }
+
+        .dice-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #120B06;
+            border-radius: 12px;
+            border: 1px solid var(--board-border);
+        }
+
+        .shells-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            justify-content: center;
+            justify-items: center;
+            align-content: center;
+            align-items: center;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+
+        .shell {
+            font-size: min(28px, 7.5vw);
+            width: min(48px, 11vw);
+            height: min(48px, 11vw);
+            background: #EADCC8;
+            border: 2px solid #8C7355;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.4s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .shell.shaking {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Rolls Pool List */
+        .rolls-pool {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+            min-height: 36px;
+        }
+
+        .roll-chip {
+            background-color: #2D1C12;
+            color: #EADCC8;
+            border: 1.5px solid var(--board-border);
+            padding: 5px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .roll-chip:hover {
+            border-color: #D9A066;
+        }
+
+        .roll-chip.selected {
+            background-color: #8B5E3C;
+            border-color: #D9A066;
+            color: #FDF5E6;
+            transform: scale(1.08);
+            box-shadow: 0 0 8px rgba(217,160,102,0.4);
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .player-score-card {
+            background: #1A110B;
+            border: 1.5px solid var(--board-border);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .player-score-card.active-card {
+            border-color: #8C7355;
+            background-color: #23160E;
+            box-shadow: 0 0 10px rgba(140, 115, 85, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 12.5px;
+            border-bottom: 1px solid rgba(140, 115, 85, 0.2);
+            padding-bottom: 4px;
+        }
+
+        .card-pockets {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 24px;
+        }
+
+        .pawn-pocket {
+            width: 19px;
+            height: 19px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1.5px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            cursor: pointer;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .pocket-container {
+            font-size: 11.5px;
+            color: #8C7355;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Game Alerts Banner */
+        .alert-banner {
+            background: #2D1C12;
+            border: 1px solid var(--board-border);
+            color: #EADCC8;
+            padding: 10px 14px;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Winner Screen popup */
+        #victory-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 11, 6, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .victory-card {
+            background: #1A110B;
+            border: 3px solid #8C7355;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        }
+
+        .victory-title {
+            font-size: 30px;
+            font-weight: bold;
+            color: #D9A066;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .victory-text {
+            font-size: 15px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            color: #EADCC8;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Ashta Changa</h1>
+    <div class="subtitle">Traditional Indian Board Game of Strategy & Chance</div>
+
+    <!-- 1. SETUP GAME SCREEN -->
+    <div id="setup-screen">
+        <h2 style="font-size:18px; margin-bottom:15px; text-align:center;">👥 Game Settings</h2>
+        
+        <div class="form-group">
+            <label for="player-count">Choose Number of Players</label>
+            <select id="player-count">
+                <option value="2">2 Players (Red vs Yellow)</option>
+                <option value="3">3 Players (Red, Green, Yellow)</option>
+                <option value="4" selected>4 Players (Red, Green, Yellow, Blue)</option>
+            </select>
+        </div>
+
+        <div id="names-inputs">
+            <div class="form-group" id="group-p0">
+                <label style="color:var(--red-color);">🔴 Player 1 (Red)</label>
+                <input type="text" id="name-p0" value="Red Player">
+            </div>
+            <div class="form-group" id="group-p1">
+                <label style="color:var(--green-color);">🟢 Player 2 (Green)</label>
+                <input type="text" id="name-p1" value="Green Player">
+            </div>
+            <div class="form-group" id="group-p2">
+                <label style="color:var(--yellow-color);">🟡 Player 3 (Yellow)</label>
+                <input type="text" id="name-p2" value="Yellow Player">
+            </div>
+            <div class="form-group" id="group-p3">
+                <label style="color:var(--blue-color);">🔵 Player 4 (Blue)</label>
+                <input type="text" id="name-p3" value="Blue Player">
+            </div>
+        </div>
+
+        <button class="btn" id="start-btn">Start Game ⚔️</button>
+    </div>
+
+    <!-- 2. MAIN ACTIVE GAME SCREEN -->
+    <div id="game-screen">
+        <!-- Event Alert Panel -->
+        <div class="alert-banner" id="info-banner">Welcome! Roll the shells to start your journey.</div>
+
+        <!-- Dynamic 5x5 Grid Board -->
+        <div class="board-container" id="board"></div>
+
+        <!-- Dashboard Panel -->
+        <div class="info-panel">
+            <div class="player-turn" id="turn-indicator">
+                <span>🔴 Red's Turn</span>
+            </div>
+
+            <div class="dice-panel">
+                <div class="shells-container">
+                    <div class="shell" id="shell-0">🐚</div>
+                    <div class="shell" id="shell-1">🐚</div>
+                    <div class="shell" id="shell-2">🐚</div>
+                    <div class="shell" id="shell-3">🐚</div>
+                    <div class="shell" id="shell-4">🐚</div>
+                    <div class="shell" id="shell-5">🐚</div>
+                    <div class="shell" id="shell-6">🐚</div>
+                    <div class="shell" id="shell-7">🐚</div>
+                </div>
+                <button class="btn" id="roll-btn" style="margin-top:0;">Roll Shells 🎲</button>
+            </div>
+
+            <!-- List of rolled numbers for the turn -->
+            <div style="text-align:center; font-size:13px; font-weight:bold; margin-top:4px;">
+                Pending Move Queue:
+                <div class="rolls-pool" id="rolls-pool-container"></div>
+            </div>
+        </div>
+
+        <!-- Play Scoreboard (Pass-and-Play tracking) -->
+        <div class="scoreboard" id="scoreboard"></div>
+    </div>
+
+    <!-- 3. VICTORY SCREEN POPUP -->
+    <div id="victory-screen">
+        <div class="victory-card">
+            <div class="victory-title">👑 VICTORY! 👑</div>
+            <div class="victory-text" id="victory-message">Red Player has won the game!</div>
+            <button class="btn" id="reset-btn">Play Again 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // GRID AND PATH LOGIC (5x5 Ashta Changa Board)
+        const BOARD_SIZE = 5;
+
+        // Outer 16 track cells in Anti-Clockwise direction
+        const OUTER_TRACK = [
+            {r:4, c:4}, {r:4, c:3}, {r:4, c:2}, {r:4, c:1}, {r:4, c:0},
+            {r:3, c:0}, {r:2, c:0}, {r:1, c:0}, {r:0, c:0}, {r:0, c:1},
+            {r:0, c:2}, {r:0, c:3}, {r:0, c:4}, {r:1, c:4}, {r:2, c:4},
+            {r:3, c:4}
+        ];
+
+        // Inner 8 track cells in Clockwise direction
+        const INNER_TRACK = [
+            {r:3, c:2}, {r:3, c:1}, {r:2, c:1}, {r:1, c:1}, {r:1, c:2},
+            {r:1, c:3}, {r:2, c:3}, {r:3, c:3}
+        ];
+
+        // Safe Zones coordinates
+        const SAFE_ZONES = [
+            {r:4, c:0}, // Red starts bottom-left
+            {r:0, c:2}, // Green starts top-center
+            {r:4, c:2}, // Blue starts bottom-center
+            {r:2, c:4}, // Yellow starts right-center
+            {r:2, c:2}  // Deep center Home safe
+        ];
+
+        // Player specific properties
+        // Red (0), Green (1), Yellow (2), Blue (3)
+        const PLAYER_CONFIG = [
+            { id: 0, key: "R", name: "Red", emoji: "🔴", colorClass: "pawn-R", outerStartIndex: 4 },   // Starts info: (4,0) (Red starts bottom-left)
+            { id: 1, key: "G", name: "Green", emoji: "🟢", colorClass: "pawn-G", outerStartIndex: 10 },  // Starts info: (0,2) (Green starts top-center)
+            { id: 2, key: "Y", name: "Yellow", emoji: "🟡", colorClass: "pawn-Y", outerStartIndex: 14 },  // Starts info: (2,4) (Yellow starts right-center)
+            { id: 3, key: "B", name: "Blue", emoji: "🔵", colorClass: "pawn-B", outerStartIndex: 2 }   // Starts info: (4,2) (Blue starts bottom-center)
+        ];
+
+        // Build entire sequence path of 25 steps for each playerId
+        // 16 Outer steps + 8 Inner steps + 1 Center Home cell
+        function getPlayerFullPath(playerId) {
+            const path = [];
+            const outerStart = PLAYER_CONFIG[playerId].outerStartIndex;
+            
+            // 1. Add 16 outer cells starting from players start safe zone
+            for (let i = 0; i < 16; i++) {
+                path.push(OUTER_TRACK[(outerStart + i) % 16]);
+            }
+            
+            // 2. Add 8 inner cells in Clockwise orientation
+            // Calibration for inner track starting cells to align perfectly inside their entry paths:
+            // Red (0) starts inner from index 1 of inner track
+            // Green (1) starts inner from index 3 of inner track
+            // Yellow (2) starts inner from index 5 of inner track
+            // Blue (3) starts inner from index 7 of inner track
+            const innerOffsets = [1, 3, 5, 7];
+            const innerStart = innerOffsets[playerId];
+            for (let i = 0; i < 8; i++) {
+                path.push(INNER_TRACK[(innerStart + i) % 8]);
+            }
+
+            // 3. Final Home cell (2,2)
+            path.push({r:2, c:2});
+
+            return path;
+        }
+
+        // State variables
+        let players = [];
+        let currentPlayerIndex = 0;
+        let rollsPool = [];
+        let selectedRollIndex = -1;
+        let consecutiveExtraRolls = 0; 
+        let isMovingPawn = false;
+        let setupPlayerCount = 4;
+
+        // HELPER UTILS
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function isSafeZone(r, c) {
+            return SAFE_ZONES.some(cell => cell.r === r && cell.c === c);
+        }
+
+        // Set up events on startup
+        document.getElementById("player-count").addEventListener("change", function(e) {
+            const count = parseInt(e.target.value);
+            setupPlayerCount = count;
+            
+            // Show / hide configured players input
+            document.getElementById("group-p0").style.display = "block";
+            document.getElementById("group-p2").style.display = "block";
+            
+            if (count === 2) {
+                document.getElementById("group-p1").style.display = "none";
+                document.getElementById("group-p3").style.display = "none";
+            } else if (count === 3) {
+                document.getElementById("group-p1").style.display = "block";
+                document.getElementById("group-p3").style.display = "none";
+            } else {
+                document.getElementById("group-p1").style.display = "block";
+                document.getElementById("group-p3").style.display = "block";
+            }
+        });
+
+        document.getElementById("start-btn").addEventListener("click", initGame);
+        document.getElementById("roll-btn").addEventListener("click", rollCowries);
+        document.getElementById("reset-btn").addEventListener("click", function() {
+            document.getElementById("victory-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "none";
+            document.getElementById("setup-screen").style.display = "block";
+        });
+
+        // INIT GAME ENGINE
+        function initGame() {
+            const numPlayers = parseInt(document.getElementById("player-count").value);
+            players = [];
+            rollsPool = [];
+            selectedRollIndex = -1;
+            consecutiveExtraRolls = 0;
+            isMovingPawn = false;
+
+            // Define which player IDs are playing
+            let activeIDs = [0, 2]; // 2 players defaults to Red vs Yellow
+            if (numPlayers === 3) {
+                activeIDs = [0, 1, 2]; // Red, Green, Yellow
+            } else if (numPlayers === 4) {
+                activeIDs = [0, 1, 2, 3]; // All 4
+            }
+
+            activeIDs.forEach((id) => {
+                const nameInp = document.getElementById("name-p" + id).value.trim();
+                const cleanName = nameInp ? nameInp : PLAYER_CONFIG[id].name;
+                
+                // Initialize 4 pawns for each player
+                const pawns = [];
+                for (let i = 0; i < 4; i++) {
+                    pawns.push({
+                        id: i,
+                        stepIndex: 0 // 0 means starting cell on board
+                    });
+                }
+
+                players.push({
+                    id: id,
+                    name: cleanName,
+                    emoji: PLAYER_CONFIG[id].emoji,
+                    colorClass: PLAYER_CONFIG[id].colorClass,
+                    key: PLAYER_CONFIG[id].key,
+                    pawns: pawns,
+                    hasMadeCut: false, // Must make a cut to unlock inner loop
+                    path: getPlayerFullPath(id)
+                });
+            });
+
+            currentPlayerIndex = 0;
+
+            // Trigger Board rendering & display change
+            renderBoardGrid();
+            document.getElementById("setup-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "flex";
+            
+            updateTurnDisplay();
+            updateScoreboard();
+            updateBoardUI();
+            setRollEnabled(true);
+            
+            notifyBanner("Game started! Roll the Cowrie Shells, " + players[currentPlayerIndex].emoji + " " + players[currentPlayerIndex].name + "!");
+        }
+
+        // Dynamic 5x5 Grid Board Construction
+        function renderBoardGrid() {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    // Apply styles for safes and homes
+                    if (r === 2 && c === 2) {
+                        cell.classList.add("home-cell");
+                        
+                        // Add colored triangles inside center cell
+                        const pTop = document.createElement("div");
+                        pTop.className = "home-pane home-pane-top";
+                        const pRight = document.createElement("div");
+                        pRight.className = "home-pane home-pane-right";
+                        const pBottom = document.createElement("div");
+                        pBottom.className = "home-pane home-pane-bottom";
+                        const pLeft = document.createElement("div");
+                        pLeft.className = "home-pane home-pane-left";
+                        
+                        cell.appendChild(pTop);
+                        cell.appendChild(pRight);
+                        cell.appendChild(pBottom);
+                        cell.appendChild(pLeft);
+                    } else if (isSafeZone(r, c)) {
+                        cell.classList.add("safe-zone");
+                        // Add distinct player entry-point coloring matching reference image
+                        if (r === 4 && c === 0) cell.classList.add("safe-red");
+                        if (r === 0 && c === 2) cell.classList.add("safe-green");
+                        if (r === 4 && c === 2) cell.classList.add("safe-blue");
+                        if (r === 2 && c === 4) cell.classList.add("safe-yellow");
+                    }
+
+                    // Inject directional arrows to match authentic Ashta Changa movement
+                    if (r === 4 && c === 0) {
+                        const arrow = document.createElement("span");
+                        arrow.className = "board-arrow-emoji";
+                        arrow.style.color = "var(--red-color)";
+                        arrow.innerText = "➡️⬆️"; // Red exit direction
+                        cell.appendChild(arrow);
+                    } else if (r === 0 && c === 2) {
+                        const arrow = document.createElement("span");
+                        arrow.className = "board-arrow-emoji";
+                        arrow.style.color = "var(--green-color)";
+                        arrow.innerText = "⬇️⬅️"; // Green exit direction
+                        cell.appendChild(arrow);
+                    } else if (r === 4 && c === 2) {
+                        const arrow = document.createElement("span");
+                        arrow.className = "board-arrow-emoji";
+                        arrow.style.color = "var(--blue-color)";
+                        arrow.innerText = "⬆️⬅️"; // Blue exit direction
+                        cell.appendChild(arrow);
+                    } else if (r === 2 && c === 4) {
+                        const arrow = document.createElement("span");
+                        arrow.className = "board-arrow-emoji";
+                        arrow.style.color = "var(--yellow-color)";
+                        arrow.innerText = "⬅️⬆️"; // Yellow exit direction
+                        cell.appendChild(arrow);
+                    }
+
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        // COWRIE SHELLS LOGIC
+        async function rollCowries() {
+            if (isMovingPawn) return;
+            setRollEnabled(false);
+
+            // Roll sound / Visual shake
+            const shells = [];
+            for (let i = 0; i < 8; i++) {
+                shells.push(document.getElementById(`shell-${i}`));
+            }
+
+            shells.forEach(s => s.classList.add("shaking"));
+            notifyBanner("Tossing the Cowrie Shells...");
+
+            await sleep(600);
+
+            // Determine randomized results (true represents open/face-up shell)
+            let upCount = 0;
+            const results = [];
+            for (let i = 0; i < 8; i++) {
+                const isOpen = Math.random() < 0.50;
+                results.push(isOpen);
+                if (isOpen) upCount++;
+            }
+
+            // Map shell visualization
+            shells.forEach((s, idx) => {
+                s.classList.remove("shaking");
+                s.innerText = results[idx] ? "🐚" : "🟤";
+            });
+
+            // Map standard traditional score weights for 8 cowries
+            let score = upCount;
+            let isBonus = false;
+
+            if (upCount === 0) {
+                score = 8; // Ashta (8 spaces)
+                isBonus = true;
+            } else if (upCount === 8) {
+                score = 8; // Ashta (8 spaces)
+                isBonus = true;
+            } else if (upCount === 4) {
+                score = 4; // Chama (4 spaces)
+                isBonus = true;
+            }
+
+            // Strict Consecutives Tracking
+            if (isBonus) {
+                consecutiveExtraRolls++;
+                if (consecutiveExtraRolls === 3) {
+                    notifyBanner("⚠️ Forfeited! 3 consecutive bonus rolls (4 or 8) is invalid! Shifting turns.");
+                    rollsPool = [];
+                    consecutiveExtraRolls = 0;
+                    await sleep(2000);
+                    nextPlayer();
+                    return;
+                }
+            } else {
+                consecutiveExtraRolls = 0;
+            }
+
+            // Add rolled amount to the turn moves queue
+            rollsPool.push(score);
+            renderRollsPool();
+
+            const p = players[currentPlayerIndex];
+            let rollLabel = score;
+            if (upCount === 0 || upCount === 8) {
+                rollLabel = "Ashta (8) 🎁";
+            } else if (upCount === 4) {
+                rollLabel = "Chama (4) 🎁";
+            }
+            
+            if (isBonus) {
+                notifyBanner(`Rolled ${rollLabel}! Roll again before applying your moves!`);
+                setRollEnabled(true);
+            } else {
+                notifyBanner(`Rolled ${rollLabel}! Start moving your pawns.`);
+                evaluatingTurnActionPhase();
+            }
+        }
+
+        function setRollEnabled(enabled) {
+            document.getElementById("roll-btn").disabled = !enabled;
+            if (enabled) {
+                document.getElementById("roll-btn").style.opacity = "1";
+            } else {
+                document.getElementById("roll-btn").style.opacity = "0.5";
+            }
+        }
+
+        function renderRollsPool() {
+            const container = document.getElementById("rolls-pool-container");
+            container.innerHTML = "";
+            rollsPool.forEach((val, idx) => {
+                const chip = document.createElement("div");
+                chip.className = "roll-chip";
+                if (idx === selectedRollIndex) {
+                    chip.classList.add("selected");
+                }
+                chip.innerText = val;
+                chip.addEventListener("click", () => {
+                    if (isMovingPawn) return;
+                    selectedRollIndex = idx;
+                    renderRollsPool();
+                    updateBoardUI();
+                });
+                container.appendChild(chip);
+            });
+        }
+
+        // MOVEMENT LOGIC & PATH LAWS
+        function getPawnTargetIndex(player, pawn, rollAmount) {
+            if (pawn.stepIndex === 24) return -1; // Already home
+
+            let nextStep;
+            if (pawn.stepIndex === -1) {
+                // To enter starting point: consumes steps
+                nextStep = rollAmount - 1;
+            } else {
+                if (!player.hasMadeCut) {
+                    // Restricted to wrap around the outer ring indefinitely
+                    if (pawn.stepIndex < 16) {
+                        nextStep = pawn.stepIndex + rollAmount;
+                        if (nextStep >= 16) {
+                            nextStep = nextStep % 16;
+                        }
+                    } else {
+                        // Safe defensive fallback
+                        nextStep = pawn.stepIndex + rollAmount;
+                    }
+                } else {
+                    // Path fully unlocked to center inner ring!
+                    nextStep = pawn.stepIndex + rollAmount;
+                }
+            }
+
+            // Exact match validation to land precisely on Home (2,2) which is path index 24
+            if (nextStep > 24) {
+                return -1; // Overshoots Home, disallowed
+            }
+
+            return nextStep;
+        }
+
+        // Validate if a pawn can move
+        function isValidMove(player, pawn, rollAmount) {
+            const target = getPawnTargetIndex(player, pawn, rollAmount);
+            return target !== -1;
+        }
+
+        // Turn validation check: Can CURRENT player make any legal moves with ANY roll in pool?
+        function hasLegalMovesAvailable() {
+            if (rollsPool.length === 0) return false;
+            const p = players[currentPlayerIndex];
+
+            for (let rIdx = 0; rIdx < rollsPool.length; rIdx++) {
+                const val = rollsPool[rIdx];
+                for (let pIdx = 0; pIdx < p.pawns.length; pIdx++) {
+                    if (isValidMove(p, p.pawns[pIdx], val)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Moving phase init or automatic skip
+        function evaluatingTurnActionPhase() {
+            if (rollsPool.length === 0) {
+                nextPlayer();
+                return;
+            }
+
+            // Force auto selection of first roll index if none is selected yet
+            if (selectedRollIndex === -1 || selectedRollIndex >= rollsPool.length) {
+                selectedRollIndex = 0;
+            }
+
+            // Checks deadlocks
+            if (!hasLegalMovesAvailable()) {
+                notifyBanner("😔 No legal moves available for your rolls pool! Discarding pool.");
+                setTimeout(async () => {
+                    rollsPool = [];
+                    renderRollsPool();
+                    await sleep(1500);
+                    nextPlayer();
+                }, 1000);
+                return;
+            }
+
+            renderRollsPool();
+            updateBoardUI();
+        }
+
+        // Dynamic Redraw of Board States, Pawns and Yard Pockets
+        function updateBoardUI() {
+            // 1. Reset all board cells first
+            const cells = document.querySelectorAll(".cell");
+            cells.forEach(c => {
+                // Clear any render descendants except the helper tag & safe label
+                const existingPawns = c.querySelectorAll(".pawn");
+                existingPawns.forEach(p => p.remove());
+            });
+
+            // 2. Fetch Active Player State
+            const activePlayer = players[currentPlayerIndex];
+            const activeRoll = rollsPool[selectedRollIndex] || 0;
+
+            // 3. Render and bind event listeners to pawns currently active on board
+            players.forEach(p => {
+                p.pawns.forEach(pawn => {
+                    if (pawn.stepIndex !== -1) {
+                        const cellCoord = p.path[pawn.stepIndex];
+                        const cellElement = document.querySelector(`[data-row="${cellCoord.r}"][data-col="${cellCoord.c}"]`);
+                        
+                        if (cellElement) {
+                            const pawnElement = document.createElement("div");
+                            pawnElement.className = `pawn ${p.colorClass}`;
+                            pawnElement.innerText = "★";
+                            pawnElement.title = `${p.name} Pawn ${pawn.id + 1}`;
+
+                            // Highlight active valid movers
+                            if (!isMovingPawn && p.id === activePlayer.id && activeRoll !== 0) {
+                                if (isValidMove(activePlayer, pawn, activeRoll)) {
+                                    pawnElement.classList.add("valid-move");
+                                    pawnElement.addEventListener("click", () => {
+                                        executePawnMove(pawn);
+                                    });
+                                }
+                            }
+
+                            cellElement.appendChild(pawnElement);
+                        }
+                    }
+                });
+            });
+
+            // 4. Update Scoreboards & Side Pocket states
+            updateScoreboard();
+        }
+
+        function updateScoreboard() {
+            const container = document.getElementById("scoreboard");
+            container.innerHTML = "";
+
+            const activePlayer = players[currentPlayerIndex];
+            const activeRoll = rollsPool[selectedRollIndex] || 0;
+
+            players.forEach(p => {
+                const card = document.createElement("div");
+                card.className = "player-score-card";
+                if (p.id === activePlayer.id) {
+                    card.classList.add("active-card");
+                }
+
+                // Header info
+                const header = document.createElement("div");
+                header.className = "card-header";
+                header.innerHTML = `
+                    <span style="color:var(--${p.name.toLowerCase()}-color, var(--text-color))">${p.emoji} ${p.name}</span>
+                    <span>${p.hasMadeCut ? "🔓 Path Open" : "🔒 Outer Only"}</span>
+                `;
+                card.appendChild(header);
+
+                // Home scores info
+                const homeReachedCount = p.pawns.filter(pawn => pawn.stepIndex === 24).length;
+                const scoresDiv = document.createElement("div");
+                scoresDiv.style.fontSize = "12px";
+                scoresDiv.style.fontWeight = "bold";
+                scoresDiv.innerText = `Home: 🏆 ${homeReachedCount} / 4`;
+                card.appendChild(scoresDiv);
+
+                container.appendChild(card);
+            });
+        }
+
+        // STEPWISE MOTION AND INTERACTION CONTROL
+        async function executePawnMove(pawn) {
+            if (isMovingPawn) return;
+            isMovingPawn = true;
+
+            const player = players[currentPlayerIndex];
+            const rollAmount = rollsPool[selectedRollIndex];
+            const startStep = pawn.stepIndex;
+            const targetStep = getPawnTargetIndex(player, pawn, rollAmount);
+
+            // Temporarily unbind interactive controls during transition
+            setRollEnabled(false);
+
+            notifyBanner(`Moving ${player.name}'s pawn ${pawn.id + 1}...`);
+
+            // Stepwise visual walk
+            for (let walk = 1; walk <= rollAmount; walk++) {
+                let currentPosIndex;
+                if (startStep === -1) {
+                    currentPosIndex = walk - 1;
+                } else {
+                    if (!player.hasMadeCut) {
+                        if (startStep < 16) {
+                            currentPosIndex = startStep + walk;
+                            if (currentPosIndex >= 16) {
+                                currentPosIndex = currentPosIndex % 16;
+                            }
+                        } else {
+                            currentPosIndex = startStep + walk;
+                        }
+                    } else {
+                        currentPosIndex = startStep + walk;
+                    }
+                }
+
+                pawn.stepIndex = currentPosIndex;
+                updateBoardUI();
+                await sleep(220); // Delay for high visual tracking!
+            }
+
+            pawn.stepIndex = targetStep;
+            
+            // Recompute post movement evaluations (cuts / homes)
+            await handleMovementEndEffects(pawn, player);
+            
+            // Remove the expended roll amount from pool list
+            rollsPool.splice(selectedRollIndex, 1);
+            selectedRollIndex = rollsPool.length > 0 ? 0 : -1;
+
+            isMovingPawn = false;
+
+            // Shift turn or allow further roll spends
+            evaluatingTurnActionPhase();
+        }
+
+        // Post move collision detectors, cuts and scoring rules
+        async function handleMovementEndEffects(pawn, player) {
+            const lastCellCoord = player.path[pawn.stepIndex];
+            
+            // 1. Landing on exact Home
+            if (pawn.stepIndex === 24) {
+                notifyBanner(`🎉 Brilliant! ${player.emoji} ${player.name} got Pawn ${pawn.id + 1} HOME!`);
+                await sleep(1500);
+
+                // Victory condition check
+                const arrivedCount = player.pawns.filter(p => p.stepIndex === 24).length;
+                if (arrivedCount === 4) {
+                    declareWinner(player);
+                    return;
+                }
+            }
+
+            // 2. Conflict zone check (Opponent Cut evaluation)
+            if (!isSafeZone(lastCellCoord.r, lastCellCoord.c)) {
+                let cutMade = false;
+                
+                // Scan all opponents for occupied pawns on target grid matching coordinates
+                players.forEach(opp => {
+                    if (opp.id !== player.id) {
+                        opp.pawns.forEach(oppPawn => {
+                            if (oppPawn.stepIndex !== -1 && oppPawn.stepIndex !== 24) {
+                                const oppCoord = opp.path[oppPawn.stepIndex];
+                                if (oppCoord.r === lastCellCoord.r && oppCoord.c === lastCellCoord.c) {
+                                    // Slay opponent back to starting cell!
+                                    oppPawn.stepIndex = 0;
+                                    cutMade = true;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                if (cutMade) {
+                    player.hasMadeCut = true; // This unlock outer loops for player
+                    notifyBanner(`⚔️ OUTSTANDING! ${player.emoji} ${player.name} captured an opponent's pawn! Inner track unlocked + 🎁 Bonus Roll granted!`);
+                    
+                    // Award bonus roll directly!
+                    rollsPool.push(getRandomRollDirect()); 
+                    await sleep(2000);
+                }
+            }
+        }
+
+        function getRandomRollDirect() {
+            // Helper roll calculation for rewarding prompt cut outcomes instantly
+            let upCount = 0;
+            for (let i = 0; i < 4; i++) {
+                if (Math.random() < 0.50) upCount++;
+            }
+            if (upCount === 0) return 8;
+            if (upCount === 4) return 4;
+            return upCount;
+        }
+
+        // Shift turn control to matching player sequence
+        function nextPlayer() {
+            rollsPool = [];
+            selectedRollIndex = -1;
+            consecutiveExtraRolls = 0;
+            
+            // Loop player shifts
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            
+            updateTurnDisplay();
+            setRollEnabled(true);
+            
+            notifyBanner(`Current Turn: ${players[currentPlayerIndex].emoji} ${players[currentPlayerIndex].name}. Roll the cowries!`);
+            updateBoardUI();
+        }
+
+        function updateTurnDisplay() {
+            const p = players[currentPlayerIndex];
+            const div = document.getElementById("turn-indicator");
+            div.innerHTML = `<span style="color:var(--${p.name.toLowerCase()}-color, var(--text-color))">${p.emoji} ${p.name}'s Turn</span>`;
+        }
+
+        function notifyBanner(text) {
+            document.getElementById("info-banner").innerText = text;
+        }
+
+        // Declare victory condition
+        function declareWinner(player) {
+            document.getElementById("victory-message").innerHTML = `👑 🚀 <b>${player.name}</b> has successfully escorted all 4 pawns to Home base and is crowned the Overlord of Ashta Changa!`;
+            document.getElementById("victory-screen").style.display = "flex";
+        }
+    </script>
+</body>
+</html>

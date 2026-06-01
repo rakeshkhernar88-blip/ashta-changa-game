@@ -1,0 +1,6 @@
+{
+  "name": "Ashta Changa",
+  "description": "Traditional Indian pass-and-play board game of Strategy and Chance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
